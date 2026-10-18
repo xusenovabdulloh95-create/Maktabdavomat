@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UstozDavomat</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#eef2f7;color:#172033}
+.card{background:white;width:min(420px,92%);margin:70px auto;padding:28px;border-radius:16px;box-shadow:0 8px 30px #0001}
+h1{text-align:center;color:#155eef}
+input,select,button{width:100%;padding:13px;margin:8px 0;border-radius:8px;border:1px solid #ccd3df;font-size:16px}
+button{background:#155eef;color:white;border:0;cursor:pointer;font-weight:bold}
+button:hover{background:#1049bd}
+#app{display:none;max-width:900px;margin:25px auto;padding:20px}
+.panel{background:white;padding:22px;border-radius:14px;margin-top:15px}
+.small{color:#687386;font-size:14px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #eee;padding:10px 0}
+.item select{max-width:160px}
+#error{color:#d22}
+</style>
+</head>
+<body>
+<div class="card" id="login">
+  <h1>UstozDavomat</h1>
+  <p class="small" style="text-align:center">Tizimga kirish</p>
+  <input id="username" placeholder="Login" autocomplete="username">
+  <input id="password" type="password" placeholder="Parol" autocomplete="current-password">
+  <button onclick="loginUser()">Kirish</button>
+  <p id="error"></p>
+  <p class="small">Hisob ma'lumotlarini tizim administratori beradi.</p>
+</div>
+
+<div id="app">
+  <h1>UstozDavomat</h1>
+  <div class="panel">
+    <div id="welcome"></div>
+    <p id="today"></p>
+    <button onclick="logout()">Chiqish</button>
+  </div>
+  <div class="panel" id="teacherPanel">
+    <h2>Bugungi davomat</h2>
+    <label>Davomat holati:</label>
+    <select id="status">
+      <option value="Keldim">Keldim</option>
+      <option value="Kechikdim">Kechikdim</option>
+      <option value="Kelmadim">Kelmadim</option>
+    </select>
+    <button onclick="saveAttendance()">Davomatni belgilash</button>
+    <p id="saved"></p>
+  </div>
+  <div class="panel" id="adminPanel" style="display:none">
+    <h2>Davomat hisobotlari</h2>
+    <div id="reports"></div>
+  </div>
+</div>
+
+<script>
+/*
+  NAMUNA HISOBLARI:
+  Direktor: direktor / Direktor2026!
+  O'qituvchi: ustoz1 / Ustoz2026!
+
+  Bu demo parollarni HTML ichida saqlaydi.
+  Haqiqiy internet tizimida bunday qilish xavfsiz emas.
+*/
+const users = [
+  {login:"direktor", password:"Direktor2026!", role:"admin", name:"Direktor o‘rinbosari"},
+  {login:"ustoz1", password:"Ustoz2026!", role:"teacher", name:"O‘qituvchi 1"}
+];
+
+function loginUser(){
+  const u=document.getElementById("username").value.trim();
+  const p=document.getElementById("password").value;
+  const user=users.find(x=>x.login===u && x.password===p);
+  if(!user){
+    document.getElementById("error").textContent="Login yoki parol noto‘g‘ri.";
+    return;
+  }
+  sessionStorage.setItem("demoUser",JSON.stringify({
+    login:user.login,role:user.role,name:user.name
+  }));
+  showApp(user);
+}
+
+function showApp(user){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("welcome").textContent="Xush kelibsiz, "+user.name;
+  document.getElementById("today").textContent="Sana: "+new Date().toLocaleDateString("uz-UZ");
+  document.getElementById("teacherPanel").style.display=user.role==="teacher"?"block":"none";
+  document.getElementById("adminPanel").style.display=user.role==="admin"?"block":"none";
+  if(user.role==="admin") showReports();
+}
+
+function saveAttendance(){
+  const user=JSON.parse(sessionStorage.getItem("demoUser"));
+  const key="attendanceDemo";
+  const data=JSON.parse(localStorage.getItem(key)||"{}");
+  const date=new Date().toLocaleDateString("uz-UZ");
+  data[user.login]={name:user.name,status:document.getElementById("status").value,date:date};
+  localStorage.setItem(key,JSON.stringify(data));
+  document.getElementById("saved").textContent="Davomat ushbu brauzerda saqlandi.";
+}
+
+function showReports(){
+  const data=JSON.parse(localStorage.getItem("attendanceDemo")||"{}");
+  const box=document.getElementById("reports");
+  box.innerHTML="";
+  const entries=Object.values(data);
+  if(!entries.length){box.textContent="Hozircha davomat belgilanmagan.";return;}
+  entries.forEach(x=>{
+    const row=document.createElement("p");
+    row.textContent=x.name+" — "+x.status+" — "+x.date;
+    box.appendChild(row);
+  });
+}
+
+function logout(){
+  sessionStorage.removeItem("demoUser");
+  location.reload();
+}
+</script>
+</body>
+</html>
